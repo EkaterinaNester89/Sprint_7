@@ -1,73 +1,34 @@
 import allure
+import pytest
 
 from data.courier import CourierApiMessages
+from helpers.courier import CourierAPIHelper
 
 
 class TestCourierCreate:
-    @allure.title("Проверка курьера можно создать")
-    def test_courier_create_account_success(self, courier_api):
-        data = courier_api.generate_courier_create_data()
-        response = courier_api.send_request_create(data)
-        assert 'ok' in response.json()
-
-    @allure.title("Проверка нельзя создать двух одинаковых курьеров")
-    def test_courier_create_account_twice_same_shows_error(self, courier_api):
-        data = courier_api.generate_courier_create_data()
-        courier_api.send_request_create(data)
-        response = courier_api.send_request_create(data)
-        assert response.status_code == 409
 
     @allure.title(
-        "Проверка чтобы создать курьера, нужно передать в ручку все обязательные поля (логин - пароль)"
+        "Проверка курьера можно создать "
+        'и успешный запрос возвращает {{"ok":true}} '
+        "и запрос возвращает правильный код ответа - 201 "
+        "и нужно передать в ручку все обязательные поля (логин - пароль) "
+        "и если имени нет - создание происходит"
     )
-    def test_courier_create_account_with_all_required_fields(self, courier_api):
+    def test_courier_create_account_shows_ok_true_201(self):
+        courier_api = CourierAPIHelper()
         data = courier_api.generate_courier_create_data(keys=["login", "password"])
         response = courier_api.send_request_create(data)
         assert response.status_code == 201
-
-    @allure.title("Проверка запрос возвращает правильный код ответа - 201")
-    def test_courier_create_account_shows_code_201(self, courier_api):
-        data = courier_api.generate_courier_create_data()
-        response = courier_api.send_request_create(data)
-        assert response.status_code == 201
-
-    @allure.title('Проверка успешный запрос возвращает {{"ok":true}}')
-    def test_courier_create_account_shows_ok_true(self, courier_api):
-        data = courier_api.generate_courier_create_data()
-        response = courier_api.send_request_create(data)
         assert response.json() == CourierApiMessages.COURIER_CREATE
 
-    @allure.title("Проверка если логина нет - запрос возвращает ошибку")
-    def test_courier_create_account_without_login_field_shows_error_400(
-        self, courier_api
-    ):
-        data = courier_api.generate_courier_create_data(keys=["firstName", "password"])
-        response = courier_api.send_request_create(data)
-        assert response.status_code == 400
-
-    @allure.title("Проверка если пароля нет - запрос возвращает ошибку")
-    def test_courier_create_account_without_password_field_shows_error_400(
-        self, courier_api
-    ):
-        data = courier_api.generate_courier_create_data(keys=["login", "firstName"])
-        response = courier_api.send_request_create(data)
-        assert response.status_code == 400
-
-    @allure.title("Проверка если имени нет - создание происходит")
-    def test_courier_create_account_without_first_name_field_shows_success_201(
-        self, courier_api
-    ):
-        data = courier_api.generate_courier_create_data(keys=["login", "password"])
-        response = courier_api.send_request_create(data)
-        assert response.status_code == 201
-
     @allure.title(
-        "Проверка если создать пользователя с логином, который уже есть, возвращается ошибка"
+        "Проверка нельзя создать двух одинаковых курьеров "
+        "и если создать пользователя с логином, который уже есть, возвращается ошибка"
     )
-    def test_courier_create_account_login_exists_show_error_409(self, courier_api):
+    def test_courier_create_account_twice_same_shows_error_409(self):
+        courier_api = CourierAPIHelper()
         data = courier_api.generate_courier_create_data()
         courier_api.send_request_create(data)
-
         data.update(
             {
                 "password": "password" + courier_api.generate_random_string(23),
@@ -77,3 +38,29 @@ class TestCourierCreate:
         response = courier_api.send_request_create(data)
 
         assert response.status_code == 409
+        assert response.json().get("message") == CourierApiMessages.COURIER_CREATE_ACCOUNT_EXISTS
+
+    @pytest.mark.parametrize(
+        "test_case, keys",
+        [
+            pytest.param(
+                "Проверка если логина нет - запрос возвращает ошибку",
+                ["firstName", "password"],
+                id="without_login",
+            ),
+            pytest.param(
+                "Проверка если пароля нет - запрос возвращает ошибку",
+                ["login", "firstName"],
+                id="without_password",
+            ),
+        ],
+    )
+    @allure.title("{test_case}")
+    def test_courier_create_with_missing_fields_shows_error_400(self, test_case, keys):
+        courier_api = CourierAPIHelper()
+
+        data = courier_api.generate_courier_create_data(keys=keys)
+        response = courier_api.send_request_create(data)
+
+        assert response.status_code == 400
+        assert response.json().get("message") == CourierApiMessages.COURIER_CREATE_MISSING_DATA

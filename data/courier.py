@@ -8,3 +8,7 @@ class CourierUrls:
 
 class CourierApiMessages:
     COURIER_CREATE = {"ok": True}
+    COURIER_CREATE_MISSING_DATA = "Недостаточно данных для создания учетной записи"
+    COURIER_CREATE_ACCOUNT_EXISTS = "Этот логин уже используется. Попробуйте другой."
+    COURIER_LOGIN_MISSING_DATA = "Недостаточно данных для входа"
+    COURIER_LOGIN_ACCOUNT_NOT_EXISTS = "Учетная запись не найдена"

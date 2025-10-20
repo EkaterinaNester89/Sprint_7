@@ -9,3 +9,4 @@ class OrderUrls:
 class OrderApiMessages:
     ORDER_CREATE = "track"
     ORDERS_LIST = "orders"
+    ORDERS_LIST_COURIER_ID_NOT_EXISTS = "Курьер с идентификатором {courierId} не найден"
